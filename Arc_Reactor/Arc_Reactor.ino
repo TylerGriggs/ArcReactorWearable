@@ -37,10 +37,10 @@ void setup() {
   // Color-State Switch, opening animation
   last_state = digitalRead(BUTTON_PIN1);
   if (last_state == LOW) {
-      colorWipe(ironBlue, WAIT*2);
+      colorWipe(ironBlue, WAIT*1.5);
     }
   else {
-    colorWipe(ironRed, WAIT*2);
+    colorWipe(ironRed, WAIT*1.5);
     }
 }
 
@@ -54,13 +54,18 @@ void loop() {
       colorWipe(ironBlue, WAIT);
       last_state = curr_state;
       }
-    blueFade(random_wait);
-    if (random_wait > 3500){
+    blueBreathe(random_wait);
+
+    // Long enough hold on Blue triggers a White animation
+    if (random_wait > 4000){
+        // Check if color or brightness switch state has changed
+        set_brightness();
         curr_state = digitalRead(BUTTON_PIN1);
-        if (curr_state == last_state){whiteFade(random_wait);}
+        if (curr_state == last_state){whiteBreathe(random_wait);}
         else {
+            // Color has changed
             colorWipe(ironRed, WAIT);
-            yellowFade(random_wait);
+            yellowBreathe(random_wait);
           }
       }
     }
@@ -70,44 +75,32 @@ void loop() {
       colorWipe(ironRed, WAIT);
       last_state = curr_state;
       }
-    redFade(random_wait);
-    if (random_wait > 3500){
+    redBreathe(random_wait);
+
+    // Long enough hold on Red triggers a Yellow animation
+    if (random_wait > 4000){
+      // Check if color or brightness switch state has changed
+      set_brightness();
       curr_state = digitalRead(BUTTON_PIN1);
-      if (curr_state == last_state){yellowFade(random_wait);}
+      if (curr_state == last_state){yellowBreathe(random_wait);}
       else {
+            // Color has changed
             colorWipe(ironBlue, WAIT);
-            whiteFade(random_wait);
+            whiteBreathe(random_wait);
           }
     }
   }
   last_state = curr_state;
 } //END LOOP
 
-void blueFade(int random_wait) {
-  uint32_t c;
+void blueBreathe(int random_wait) {
   set_brightness();
-  for (int b = 50; b < 255-brightness_pad; b++){
-    c = strip.Color(b/10, b/5, b);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(1);
-  }
+  blueFadeUp();
   delay(random_wait);
-  for (int b = 255-brightness_pad; b > 50; b--){
-    c = strip.Color(b/10, b/5, b);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(1);
-  }
+  blueFadeDown();
 }
 
-
-
-void whiteFade(int random_wait) {
+void whiteBreathe(int random_wait) {
   uint32_t c;
   int r = 5;
   int g = 10;
@@ -127,39 +120,19 @@ void whiteFade(int random_wait) {
   
   // Fade up White
   set_brightness();
-  for (int b = 50; b < 255-brightness_pad; b++){
-    c = strip.Color(b, b, b);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(2);
-  }
-  
+  whiteFadeUp();
   delay(random_wait);
-  set_brightness();
-
+  
   // Random Animation Select
+  set_brightness();
   int mod = random_wait % 3;
   switch(mod) {
     case 0:
-      for (int repeat = 6-mod; repeat>0; repeat--){
-        for (int b = 255-brightness_pad; b > 50; b--){
-          c = strip.Color(b, b, b);
-          for(uint16_t i=0; i<strip.numPixels(); i++) {
-            strip.setPixelColor(i, c);
-          }
-          strip.show();
-          delay(mod+2);
-        }
-        for (int b = 50; b < 255-brightness_pad; b++){
-          c = strip.Color(b, b, b);
-          for(uint16_t i=0; i<strip.numPixels(); i++) {
-            strip.setPixelColor(i, c);
-          }
-          strip.show();
-          delay(mod+2);
-        }
+      for (int repeat = 6; repeat>0; repeat--){
+        whiteFadeDown();
+        delay(2);
+        whiteFadeUp();
+        delay(2);
       }
       break;
     case 1:
@@ -173,16 +146,8 @@ void whiteFade(int random_wait) {
       colorWipe(strip.Color(255-brightness_pad, 255-brightness_pad, 255-brightness_pad), WAIT);
       break;
   }
-  
-  // Fade Down White
-  for (int b = 255-brightness_pad; b > 50; b--){ 
-    c = strip.Color(b, b, b);
-    for(uint16_t i=0; i<strip.numPixels(); i++){
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(2);
-  }
+  delay(1000);
+  whiteFadeDown();
 
   // Shift Color from White to Light-Blue
   for (int v = 255; v > 0; v--){
@@ -199,29 +164,15 @@ void whiteFade(int random_wait) {
 }
 
 
-void redFade(int random_wait) {
+void redBreathe(int random_wait) {
   uint32_t c;
   set_brightness();
-  for (int r = 50; r < 255-brightness_pad; r++){
-    c = strip.Color(r, r/20, 0);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(1);
-  }
+  redFadeUp();
   delay(random_wait);
-  for (int r = 255-brightness_pad; r > 50; r--){
-    c = strip.Color(r, r/20, 0);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(1);
-  }
+  redFadeDown();
 }
 
-void yellowFade(int random_wait) {
+void yellowBreathe(int random_wait) {
   uint32_t c;
   int r = 50;
   int g = 5;
@@ -238,48 +189,22 @@ void yellowFade(int random_wait) {
     strip.show();
     delay(1);
   }
+  
   // Fade up Yellow
   set_brightness();
-  for (int y = 100; y < 255-(brightness_pad/2); y++){
-    r = y;
-    g = y/2;
-    c = strip.Color(r, g, 0);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(2);
-  }
-  
+  yellowFadeUp();
   delay(random_wait);
-  set_brightness();
 
   // Random Animation Select
+  set_brightness();
   int mod = random_wait % 3;
   switch(mod) {
     case 0:
-      for (int repeat = 6-mod; repeat>0; repeat--){
-        // Fade Up Red **SHOULD BE METHODIZED AT THIS POINT
-        for (int y = 100; y < 255-(brightness_pad/2); y++){
-          r = y;
-          g = y/2;
-          c = strip.Color(r, g, 0);
-          for(uint16_t i=0; i<strip.numPixels(); i++) {
-            strip.setPixelColor(i, c);
-          }
-          strip.show();
-          delay(mod+2);
-        }
-        for (int y = 255-(brightness_pad/2); y > 100; y--){
-        r = y;
-        g = y/2;
-        c = strip.Color(r, g, 0);
-        for(uint16_t i=0; i<strip.numPixels(); i++) {
-          strip.setPixelColor(i, c);
-        }
-        strip.show();
-          delay(mod+2);
-        }
+      for (int repeat = 6; repeat>0; repeat--){
+        yellowFadeDown();
+        delay(2);
+        yellowFadeUp();
+        delay(2);
       }
       break;
     case 1:
@@ -293,18 +218,8 @@ void yellowFade(int random_wait) {
       colorWipe(strip.Color(255-(brightness_pad/2), (255-(brightness_pad/2))/2, 0), WAIT);
       break;
   }
-  
-  // Fade Down Yellow
-  for (int y = 255-(brightness_pad/2); y > 100; y--){
-    r = y;
-    g = y/2;
-    c = strip.Color(r, g, 0);
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-    }
-    strip.show();
-    delay(2);
-    }
+  delay(1000);
+  yellowFadeDown();
 
   // Shift Color from Yellow to Red
   for (int v = 255; v > 0; v--){
@@ -328,6 +243,102 @@ void set_brightness() {
     }
   }
 
+void blueFadeUp() {
+  uint32_t c;
+  for (int b = 50; b < 255-brightness_pad; b++){
+    c = strip.Color(b/10, b/5, b);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(1);
+    }
+  }
+
+void blueFadeDown() {
+  uint32_t c;
+  for (int b = 255-brightness_pad; b > 50; b--){
+    c = strip.Color(b/10, b/5, b);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(1);
+    }
+  }
+
+void whiteFadeUp() {
+  uint32_t c;
+  for (int b = 50; b < 150-brightness_pad; b++){
+    c = strip.Color(b, b, b);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(2);
+    }
+  }
+
+void whiteFadeDown() {
+  uint32_t c;
+  for (int b = 150-brightness_pad; b > 50; b--){ 
+    c = strip.Color(b, b, b);
+    for(uint16_t i=0; i<strip.numPixels(); i++){
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(2);
+    }
+  }
+
+void redFadeUp() {
+  uint32_t c;
+  for (int r = 50; r < 255-brightness_pad; r++){
+    c = strip.Color(r, r/20, 0);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(1);
+    }
+  }
+
+void redFadeDown() {
+  uint32_t c;
+  for (int r = 255-brightness_pad; r > 50; r--){
+    c = strip.Color(r, r/20, 0);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(1);
+    }
+  }
+
+void yellowFadeUp() {
+  uint32_t c;
+  for (int y = 100; y < 255-(brightness_pad/2); y++) {
+    c = strip.Color(y, y/2, 0);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(2);
+    }
+  }
+
+void yellowFadeDown() {
+  uint32_t c;
+  for (int y = 255-(brightness_pad/2); y > 100; y--) {
+    c = strip.Color(y, y/2, 0);
+    for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, c);
+    }
+    strip.show();
+    delay(2);
+    }
+  }
+
 void two_color(uint32_t color1, uint32_t color2, uint8_t wait) {
   wait = wait * 2;
   strip.show();
@@ -345,9 +356,9 @@ void two_color(uint32_t color1, uint32_t color2, uint8_t wait) {
       else {
         strip.setPixelColor(i, color2);
         }
+      }
     }
   }
-}
 
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
@@ -356,8 +367,8 @@ void colorWipe(uint32_t c, uint8_t wait) {
     strip.setPixelColor(i, c);
     strip.show();
     delay(wait);
+    }
   }
-}
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
@@ -372,4 +383,4 @@ uint32_t Wheel(byte WheelPos) {
   }
   WheelPos -= 170;
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
+  }
